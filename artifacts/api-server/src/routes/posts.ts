@@ -77,7 +77,7 @@ router.get("/posts/saved", requireAuth, async (req, res): Promise<void> => {
     currentUserId: uid,
     limit,
     offset,
-    orderBy: "(SELECT created_at FROM saved_posts WHERE user_id = ${uid} AND post_id = p.id) DESC",
+    orderBy: `(SELECT created_at FROM saved_posts WHERE user_id = ${uid} AND post_id = p.id) DESC`,
   });
 
   res.json(posts);

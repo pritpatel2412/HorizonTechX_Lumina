@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/layout/app-layout";
-import { useGetExplorePosts, useSearchUsers, useGetUserSuggestions, useGetTrendingTags } from "@workspace/api-client-react";
+import { useGetExplorePosts, useSearchUsers, useGetUserSuggestions, useGetTrendingTags, getSearchUsersQueryKey } from "@workspace/api-client-react";
 import { PostCard } from "@/components/post-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -23,8 +23,8 @@ export default function ExplorePage() {
   }, [searchQuery]);
 
   const { data: searchResults, isLoading: searchLoading } = useSearchUsers(
-    { q: debouncedQuery }, 
-    { query: { enabled: debouncedQuery.length > 0 } }
+    { q: debouncedQuery },
+    { query: { queryKey: getSearchUsersQueryKey({ q: debouncedQuery }), enabled: debouncedQuery.length > 0 } }
   );
 
   const { data: explorePosts, isLoading: postsLoading } = useGetExplorePosts({ 

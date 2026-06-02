@@ -1,0 +1,467 @@
+Build a full-stack social media web application called "LUMINA" — a premium social network. This is a complete, production-ready product with a next-level UI.
+
+---
+
+## TECH STACK
+- Backend: Node.js + Express.js
+- Database: SQLite with better-sqlite3 (file-based, no setup needed)
+- Frontend: HTML + CSS + Vanilla JavaScript (served via Express)
+- Authentication: JWT (jsonwebtoken) + bcryptjs
+- File Uploads: multer (for profile pictures and media)
+- No external CSS frameworks — all CSS written from scratch
+
+---
+
+## DESIGN SYSTEM — "LUMINA" Premium Dark Theme
+
+Use this exact design language throughout ALL pages:
+
+**Color Palette:**
+- Background: #080810 (near black with slight blue tint)
+- Surface: #0f0f1a
+- Surface elevated: #161625
+- Border: rgba(255,255,255,0.06)
+- Accent: #7c6aff (electric violet)
+- Accent glow: rgba(124, 106, 255, 0.3)
+- Accent secondary: #ff6ab0 (neon pink)
+- Text primary: #f0eeff
+- Text secondary: #8b88a8
+- Text muted: #4a4869
+- Success: #4fffb0
+- Danger: #ff4f6a
+
+**Typography (load from Google Fonts):**
+- Display/Headings: "Syne" (weights 600, 800)
+- Body text: "DM Sans" (weights 400, 500)
+- Monospace/labels: "JetBrains Mono" (weight 400)
+
+**UI Principles:**
+- Cards have: background #0f0f1a, border 1px solid rgba(255,255,255,0.06), border-radius 16px, subtle box-shadow: 0 4px 24px rgba(0,0,0,0.4)
+- Hover cards: border-color rgba(124,106,255,0.3), box-shadow: 0 4px 32px rgba(124,106,255,0.15)
+- All transitions: 0.2s cubic-bezier(0.4, 0, 0.2, 1)
+- Primary buttons: background linear-gradient(135deg, #7c6aff, #9f6aff), no border, border-radius 10px, font-weight 600
+- Input fields: background rgba(255,255,255,0.04), border 1px solid rgba(255,255,255,0.08), border-radius 10px, color #f0eeff, focus border-color #7c6aff, focus box-shadow 0 0 0 3px rgba(124,106,255,0.2)
+- Avatar borders: 2px solid rgba(124,106,255,0.5) with subtle glow
+- Scrollbar: custom thin scrollbar, thumb #2a2840, track transparent
+- Page backgrounds: subtle radial gradient mesh — at top-left a faint circle of rgba(124,106,255,0.08) 600px, at bottom-right rgba(255,106,176,0.05) 400px, both blurred
+- Sidebar: sticky, width 260px, background #080810 with right border 1px solid rgba(255,255,255,0.05)
+- Like button animation: heart scales to 1.3 then back on click, color flips to #ff6ab0
+- Number counters animate up when liked/followed
+
+---
+
+## DATABASE SCHEMA
+
+Create these SQLite tables:
+
+```sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  display_name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  bio TEXT DEFAULT '',
+  avatar_url TEXT DEFAULT '/default-avatar.png',
+  cover_url TEXT DEFAULT '',
+  website TEXT DEFAULT '',
+  location TEXT DEFAULT '',
+  verified INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE posts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  image_url TEXT DEFAULT '',
+  post_type TEXT DEFAULT 'post', -- 'post', 'story', 'moment'
+  expires_at DATETIME DEFAULT NULL, -- for stories (24hr)
+  views INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE comments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  parent_comment_id INTEGER DEFAULT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (post_id) REFERENCES posts(id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE likes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  post_id INTEGER,
+  comment_id INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, post_id),
+  UNIQUE(user_id, comment_id)
+);
+
+CREATE TABLE follows (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  follower_id INTEGER NOT NULL,
+  following_id INTEGER NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(follower_id, following_id),
+  FOREIGN KEY (follower_id) REFERENCES users(id),
+  FOREIGN KEY (following_id) REFERENCES users(id)
+);
+
+CREATE TABLE stories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  media_url TEXT NOT NULL,
+  media_type TEXT DEFAULT 'image',
+  caption TEXT DEFAULT '',
+  bg_color TEXT DEFAULT '#7c6aff',
+  text_content TEXT DEFAULT '',
+  views INTEGER DEFAULT 0,
+  expires_at DATETIME DEFAULT (datetime('now', '+24 hours')),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE story_views (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  story_id INTEGER NOT NULL,
+  viewer_id INTEGER NOT NULL,
+  viewed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(story_id, viewer_id)
+);
+
+CREATE TABLE notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  recipient_id INTEGER NOT NULL,
+  sender_id INTEGER NOT NULL,
+  type TEXT NOT NULL, -- 'like', 'comment', 'follow', 'mention'
+  post_id INTEGER DEFAULT NULL,
+  comment_id INTEGER DEFAULT NULL,
+  read INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (recipient_id) REFERENCES users(id),
+  FOREIGN KEY (sender_id) REFERENCES users(id)
+);
+
+CREATE TABLE saved_posts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  post_id INTEGER NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, post_id)
+);
+```
+
+---
+
+## FILE STRUCTURE
+/lumina
+/public
+/css
+main.css         (global styles, design tokens)
+components.css   (cards, buttons, inputs, avatars)
+layout.css       (sidebar, feed, grid layouts)
+animations.css   (keyframes, transitions)
+/js
+app.js           (auth state, API helpers, global utils)
+feed.js          (infinite scroll, post rendering)
+stories.js       (story viewer/creator)
+profile.js       (profile page logic)
+notifications.js (notification panel)
+/uploads           (multer stores files here)
+default-avatar.png (a stylized geometric placeholder)
+/views
+index.html         (login/register landing page)
+feed.html          (main app — after login)
+profile.html       (user profile page)
+explore.html       (discover/explore page)
+notifications.html (notifications page)
+saved.html         (saved posts page)
+/routes
+auth.js
+posts.js
+users.js
+stories.js
+notifications.js
+db.js                (database connection + init)
+server.js            (main Express app)
+package.json
+
+---
+
+## BACKEND — Express.js API
+
+### server.js
+- Express app on port 3000
+- Middleware: cors, express.json, express.urlencoded, cookie-parser
+- Static files from /public
+- JWT middleware: reads token from Authorization header OR cookie named 'lumina_token'
+- Routes: /api/auth, /api/posts, /api/users, /api/stories, /api/notifications
+- Serve HTML pages: GET / → index.html, GET /feed → feed.html, GET /profile/:username → profile.html, GET /explore → explore.html
+- Auto-delete expired stories (run cleanup every hour with setInterval)
+
+### Auth Routes (/api/auth)
+- POST /register: validate username(3-20 chars, alphanumeric+underscore), email, password(min 8 chars); hash password with bcrypt(10); create user; return JWT + user object
+- POST /login: find user by email or username; compare password; return JWT (expires in 7d) + user object
+- GET /me: protected, return current user data
+- PUT /profile: protected, update display_name, bio, website, location, avatar (multer)
+- POST /change-password: protected, verify old password, update new
+
+### Posts Routes (/api/posts)
+- GET /feed: protected, paginated (limit 10, offset param), get posts from followed users + own posts, ordered by created_at DESC, include: author info, like count, comment count, whether current user liked/saved, first 2 comments
+- GET /explore: public, trending posts (most likes in last 7 days), paginated
+- GET /:id: single post with full comments tree
+- POST /: protected, create post (content required, image optional via multer, post_type optional)
+- DELETE /:id: protected, only post owner can delete
+- POST /:id/like: protected, toggle like, return {liked: bool, count: int}
+- POST /:id/save: protected, toggle save, return {saved: bool}
+- GET /:id/comments: get comments for post
+- POST /:id/comments: protected, add comment, create notification
+- DELETE /comments/:commentId: protected, only comment owner can delete
+- POST /comments/:commentId/like: toggle like on comment
+
+### Users Routes (/api/users)
+- GET /search?q=: search users by username or display_name
+- GET /:username: get user profile + stats (post count, followers, following)
+- GET /:username/posts: get user's posts paginated
+- GET /:username/followers: list followers
+- GET /:username/following: list following
+- POST /:username/follow: protected, toggle follow, return {following: bool, count: int}, create notification
+- GET /suggestions: protected, suggest users to follow (not already following, most followers)
+
+### Stories Routes (/api/stories)
+- GET /: protected, get active stories (not expired) from followed users + own, grouped by user
+- POST /: protected, upload story (image via multer, or text-only with bg_color and text_content)
+- POST /:id/view: protected, record view, return view count
+- GET /:id/viewers: protected (only story owner), list who viewed
+- DELETE /:id: protected, story owner only
+
+### Notifications Routes (/api/notifications)
+- GET /: protected, get user's notifications paginated, include sender info
+- POST /read/:id: mark one as read
+- POST /read-all: mark all as read
+- GET /unread-count: return {count: int}
+
+---
+
+## FRONTEND PAGES
+
+### index.html — Landing / Auth Page
+Full-screen split layout:
+- Left half (60%): Large artistic background with animated gradient mesh, LUMINA logo in Syne 800, tagline "Where moments become memories.", 3 floating feature cards showing key features with icons
+- Right half (40%): Clean auth panel, dark surface card
+- Toggle between LOGIN and REGISTER tabs with smooth underline slide animation
+- Login form: email/username, password, "Remember me", login button
+- Register form: display name, username (with @), email, password, confirm password
+- Form validation with inline error messages (red text, input border turns red)
+- On success: save JWT to localStorage, redirect to /feed
+- Add subtle particle animation to left side using canvas (small dots floating)
+
+### feed.html — Main App Layout
+Three-column layout:
+- LEFT SIDEBAR (260px, sticky):
+  - LUMINA logo + colored dot
+  - User avatar (small, rounded) + display name + @username
+  - Navigation: Home, Explore, Stories, Notifications (with badge), Saved, Profile, Settings
+  - "New Post" button at bottom of nav (opens modal)
+  - Active nav item: accent color, left border 3px accent, background rgba(124,106,255,0.1)
+
+- CENTER FEED (flexible):
+  - Stories bar at top: horizontally scrollable row of story bubbles (avatar with colored ring if has story, "+" button for own story)
+  - Create Post box: avatar + "What's on your mind?" placeholder, image upload icon, post type selector
+  - Infinite scroll feed of posts
+  - Loading skeleton cards while fetching
+
+- RIGHT SIDEBAR (300px):
+  - "Who to Follow" widget: 4 suggested users with follow buttons
+  - "Trending" widget: top 5 posts this week by likes
+  - Footer links (tiny text)
+
+### Post Card Component
+Each post card contains:
+- Header: avatar, display name (bold), @username (muted), verified checkmark (if verified), timestamp (relative: "2h", "3d", etc.), 3-dot menu (edit/delete for own posts, report for others)
+- Body: text content with #hashtag highlighting (accent color), image (if any, rounded 12px, max-height 400px, object-fit cover)
+- Footer: 
+  - Like button: heart icon + count, clicking animates heart, turns pink
+  - Comment button: speech bubble icon + count, clicking expands comment section
+  - Save button: bookmark icon, clicking toggles filled/outline
+  - Share button: link icon (copies URL to clipboard, shows toast "Copied!")
+- Comment section (expandable): shows 2 comments initially, "View all X comments" link, add comment input at bottom
+
+### Stories Feature (Snapchat-Inspired but DIFFERENT)
+Story bubbles in feed: circular avatars with a gradient ring (accent to secondary color). Your own bubble shows "+" if no story.
+
+Story Viewer Modal (full-screen overlay):
+- Full black background
+- Progress bars at top (one per story segment, animated like Snapchat)
+- Left/right tap zones to navigate
+- Story content fills screen (image or text card with colored bg)
+- Bottom: viewer's avatar, caption text, view count (owner only)
+- Swipe up gesture = "React" (emoji picker appears)
+- Close button top-right
+
+Story Creator (slide-up panel):
+- Option 1: Upload image (drag & drop or click)
+- Option 2: Text story — choose bg_color from palette, type text, choose font size
+- Caption input
+- "Share to Story" button
+- Stories auto-expire 24 hours after posting (handled by server cleanup)
+
+### profile.html — User Profile Page
+- Cover photo area (full width, height 200px, bg gradient if no cover)
+- Avatar (80px, positioned overlapping cover, with thick border)
+- Display name + verified badge, @username, bio, website link, location, joined date
+- Stats row: X Posts | X Followers | X Following (clicking opens modal with user lists)
+- Action buttons: "Edit Profile" (own) or "Follow/Following" + "Message" (others)
+- Tab bar: Posts | Replies | Media | Liked | Saved (only own)
+- Grid view for Media tab (3-column masonry-style), list view for Posts tab
+- Edit Profile: slide-in panel with all fields editable
+
+### explore.html — Discover Page
+- Search bar prominent at top with live search results dropdown (users + posts)
+- Masonry grid of trending posts (3 columns on desktop)
+- User discovery section: "Rising Creators" horizontal scroll
+- Trending hashtags sidebar
+
+### notifications.html
+- Group by type: Likes, Comments, Follows, Mentions
+- Each notification: sender avatar, action text, post thumbnail if applicable, timestamp
+- Unread notifications have accent left border + very subtle accent background
+- "Mark all read" button
+
+---
+
+## KEY JAVASCRIPT FEATURES
+
+### app.js (global)
+- `API` helper object with get/post/put/delete methods that auto-add JWT header
+- `Auth` object: getToken(), getUser(), logout(), isLoggedIn()
+- `Toast` system: showToast(message, type) — creates toast div, animates in from bottom-right, auto-dismisses after 3s
+- `Modal` system: open/close modals with backdrop blur
+- `timeAgo(date)` function for relative timestamps
+- Route guard: if no JWT found and not on index.html, redirect to /
+- Event: poll /api/notifications/unread-count every 60 seconds, update badge
+
+### feed.js
+- `IntersectionObserver` for infinite scroll — when last post enters view, load next page
+- `renderPost(post)` function returns full post HTML string
+- `toggleLike(postId)` — optimistic UI update, then API call
+- `loadStories()` — fetch and render story bubbles
+- New post form submission with image preview before upload
+
+### stories.js
+- Story viewer: keyboard arrows (left/right) also navigate
+- Auto-advance timer (5 seconds per story), pauses on hold (mousedown/touchstart)
+- Record view when story is opened
+
+---
+
+## SAMPLE DATA
+
+On first run (if users table is empty), seed the database with:
+- 5 users: alex_rivers, nova_chen, kai_santos, luna_dark, echo_wave
+- Each with bio, realistic display names
+- 3-5 posts per user with varied content (include some with placeholder image URLs from picsum.photos)
+- Follow relationships between them
+- Some likes and comments
+
+---
+
+## ADDITIONAL PREMIUM FEATURES (build all of these)
+
+1. **Moments** (Like Instagram Close Friends / BeReal twist): Users can post a "Moment" — a dual-image post (front camera + back camera simulation — just two image uploads). Moments appear with a special gradient border. Visible only to followers.
+
+2. **Reactions** (beyond like): On long-press/right-click of the like button, show a reaction picker with 6 emoji (❤️ 🔥 😂 😮 😢 👏). Store reaction type in likes table (add `reaction_type` column). Show top 3 reaction emojis on the post.
+
+3. **Hashtag pages**: Clicking any #hashtag in a post navigates to /explore?tag=hashtag showing all posts with that tag.
+
+4. **@Mention autocomplete**: While typing in post/comment input, if user types @, show a dropdown of matching users. Clicking one inserts @username. Mentions create notifications.
+
+5. **Post scheduling visual**: In create post modal, add a "Schedule" option that shows a datetime picker. (Store scheduled_at in posts table, posts only appear after that time.)
+
+6. **Verified badges**: Seed some users as verified=1. Show a small ✦ icon in accent color next to their name.
+
+7. **Spotlight mode**: Double-click any post image to open it in a full-screen lightbox with dark overlay, keyboard navigation between images.
+
+---
+
+## SECURITY & POLISH
+
+- All API routes that modify data require valid JWT
+- SQL injection prevented by using parameterized queries (never string concat SQL)
+- Passwords never returned in any API response
+- File upload: validate mime type (images only), max 5MB, rename to UUID
+- 404 page: stylized with the design system
+- All forms show loading spinner on submit button while request is in flight
+- Empty states: when feed is empty, show a beautiful illustration-style message "Nothing here yet — follow some people!"
+- Error boundaries: if any section fails to load, show retry button
+
+---
+
+## package.json dependencies
+
+```json
+{
+  "name": "lumina",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "better-sqlite3": "^9.4.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "cors": "^2.8.5",
+    "cookie-parser": "^1.4.6",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
+```
+
+---
+
+## REPLIT CONFIGURATION
+
+Create a `.replit` file:
+run = "npm start"
+entrypoint = "server.js"
+
+Create a `replit.nix` if needed to ensure Node 18+.
+
+---
+
+## FINAL INSTRUCTIONS
+
+1. Build every file completely — no placeholders, no "TODO" comments
+2. Every API endpoint must work and return proper JSON
+3. The frontend must consume the real API (no mock data in JS except seed data in DB)
+4. Test that login → feed → create post → like → comment → follow all work end to end
+5. The design must look EXACTLY like the design system described — dark, premium, violet accent
+6. Animations must be smooth — use CSS transitions and keyframes, not JS timers for visual effects
+7. The app must work on both desktop (3-column) and mobile (collapsed sidebar, bottom nav)
+8. After building, print to console: "✦ LUMINA is running at http://0.0.0.0:3000"
+
+📌 How to Use This
+
+Go to replit.com → Create Repl → choose "Blank" or "Node.js"
+Open the AI chat (Agent mode) in Replit
+Paste the entire prompt above
+Let it build — it'll take 5–10 minutes
+Click Run and open the webview
+
+
+🔮 What Makes This "Product-Level" vs Assignment-Level
+FeatureAssignmentThis PromptAuthBasic loginJWT + cookie, 7-day sessionPostsText onlyText + image + type systemStories❌Full Snapchat-style with 24hr expiryReactions❌6-type emoji reactionsNotifications❌Real-time polling + typesMentions❌@autocomplete + notificationsMoments❌BeReal-style dual postDesignGenericCustom dark premium UI systemDBBasic8 tables, proper relationsSecurityNoneJWT, bcrypt, parameterized SQLMobile❌Responsive bottom nav
+This is fully internship-submission ready — and honestly beyond what most junior developers would build. Good luck! 🎯

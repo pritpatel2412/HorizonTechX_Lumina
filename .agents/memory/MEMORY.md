@@ -1,0 +1,5 @@
+- [Orval TS2308 collision fix](orval-collision.md) — endpoints with BOTH path params AND query params cause Params type collision; remove query params from those endpoints.
+- [DB lib rebuild required](db-lib-rebuild.md) — after editing lib/db schema files, must run `pnpm run typecheck:libs` before server typecheck or exports will be missing.
+- [JWT sub type cast](jwt-type.md) — jwt.verify returns `string | JwtPayload` where sub is `string | undefined`; cast via `as unknown as { sub: number }` to use numeric userId.
+- [Feed raw SQL pattern](feed-raw-sql.md) — complex multi-join feed/explore/saved queries use db.execute(sql.raw(...)); simple CRUD uses Drizzle ORM builder.
+- [Auth token wiring](auth-token-wiring.md) — setAuthTokenGetter must be called in main.tsx (not App.tsx) so it's registered before any query fires; reads from localStorage key "lumina_token".

@@ -289,6 +289,30 @@ export interface UnreadCount {
   count: number;
 }
 
+export interface DirectMessage {
+  id: number;
+  content: string;
+  senderId: number;
+  receiverId: number;
+  read: boolean;
+  createdAt: string;
+  sender: UserSummary;
+}
+
+export interface Conversation {
+  user: UserSummary;
+  lastMessage: DirectMessage;
+  unreadCount: number;
+}
+
+export interface MessageInput {
+  /**
+     * @minLength 1
+     * @maxLength 2000
+     */
+  content: string;
+}
+
 export type GetFeedParams = {
 offset?: number;
 limit?: number;

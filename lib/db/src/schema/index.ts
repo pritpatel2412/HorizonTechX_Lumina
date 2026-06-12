@@ -6,3 +6,4 @@ export * from "./follows";
 export * from "./stories";
 export * from "./notifications";
 export * from "./saved_posts";
+export * from "./messages";

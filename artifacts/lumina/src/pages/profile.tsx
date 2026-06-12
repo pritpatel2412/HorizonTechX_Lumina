@@ -5,9 +5,9 @@ import {
 } from "@workspace/api-client-react";
 import { PostCard } from "@/components/post-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Link as LinkIcon, Calendar, Camera, Loader2 } from "lucide-react";
+import { MapPin, Link as LinkIcon, Calendar, Camera, Loader2, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
-import { Link, useRoute } from "wouter";
+import { Link, useRoute, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const { data: me } = useGetMe();
   const isOwnProfile = me?.username === username;
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   const { data: profile, isLoading: profileLoading } = useGetUserProfile(username, {
     query: { queryKey: getGetUserProfileQueryKey(username), enabled: !!username }
@@ -128,13 +129,23 @@ export default function ProfilePage() {
                   Edit Profile
                 </Button>
               ) : (
-                <Button
-                  className={cn("rounded-xl px-8 h-10", profile.isFollowing ? "bg-white/10 hover:bg-white/20 text-white" : "btn-primary")}
-                  onClick={handleFollow}
-                  disabled={toggleFollow.isPending}
-                >
-                  {profile.isFollowing ? "Following" : "Follow"}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    className="border-white/20 hover:bg-white/10 rounded-xl h-10 px-3"
+                    onClick={() => navigate(`/messages/${username}`)}
+                    title="Send message"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    className={cn("rounded-xl px-6 h-10", profile.isFollowing ? "bg-white/10 hover:bg-white/20 text-white" : "btn-primary")}
+                    onClick={handleFollow}
+                    disabled={toggleFollow.isPending}
+                  >
+                    {profile.isFollowing ? "Following" : "Follow"}
+                  </Button>
+                </div>
               )}
             </div>
 

@@ -9,6 +9,8 @@
 export * from './authResult';
 export * from './comment';
 export * from './commentInput';
+export * from './conversation';
+export * from './directMessage';
 export * from './errorResponse';
 export * from './feedPost';
 export * from './followResult';
@@ -19,6 +21,7 @@ export * from './getSavedPostsParams';
 export * from './healthStatus';
 export * from './likeResult';
 export * from './loginInput';
+export * from './messageInput';
 export * from './notification';
 export * from './notificationType';
 export * from './passwordInput';

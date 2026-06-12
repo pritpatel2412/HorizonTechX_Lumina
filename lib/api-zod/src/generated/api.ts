@@ -815,3 +815,104 @@ export const MarkNotificationReadResponse = zod.object({
 })
 
 
+/**
+ * @summary Get unread DM count
+ */
+export const GetDmUnreadCountResponse = zod.object({
+  "count": zod.number()
+})
+
+
+/**
+ * @summary Get all conversations
+ */
+export const GetConversationsResponseItem = zod.object({
+  "user": zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "avatarUrl": zod.string(),
+  "verified": zod.boolean(),
+  "bio": zod.string().optional(),
+  "isFollowing": zod.boolean().optional(),
+  "followerCount": zod.number().optional()
+}),
+  "lastMessage": zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "senderId": zod.number(),
+  "receiverId": zod.number(),
+  "read": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "sender": zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "avatarUrl": zod.string(),
+  "verified": zod.boolean(),
+  "bio": zod.string().optional(),
+  "isFollowing": zod.boolean().optional(),
+  "followerCount": zod.number().optional()
+})
+}),
+  "unreadCount": zod.number()
+})
+export const GetConversationsResponse = zod.array(GetConversationsResponseItem)
+
+
+/**
+ * @summary Get message thread with a user
+ */
+export const GetMessagesParams = zod.object({
+  "username": zod.coerce.string()
+})
+
+export const GetMessagesResponseItem = zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "senderId": zod.number(),
+  "receiverId": zod.number(),
+  "read": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "sender": zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "avatarUrl": zod.string(),
+  "verified": zod.boolean(),
+  "bio": zod.string().optional(),
+  "isFollowing": zod.boolean().optional(),
+  "followerCount": zod.number().optional()
+})
+})
+export const GetMessagesResponse = zod.array(GetMessagesResponseItem)
+
+
+/**
+ * @summary Send a message to a user
+ */
+export const SendMessageParams = zod.object({
+  "username": zod.coerce.string()
+})
+
+export const sendMessageBodyContentMax = 2000;
+
+
+
+export const SendMessageBody = zod.object({
+  "content": zod.string().min(1).max(sendMessageBodyContentMax)
+})
+
+
+/**
+ * @summary Mark messages from a user as read
+ */
+export const MarkMessagesReadParams = zod.object({
+  "username": zod.coerce.string()
+})
+
+export const MarkMessagesReadResponse = zod.object({
+  "success": zod.boolean()
+})
+
+

@@ -11,6 +11,8 @@ import ProfilePage from "@/pages/profile";
 import SavedPage from "@/pages/saved";
 import PostDetailPage from "@/pages/post-detail";
 import SettingsPage from "@/pages/settings";
+import MessagesPage from "@/pages/messages";
+import MessageThreadPage from "@/pages/message-thread";
 import { useEffect } from "react";
 import { getToken } from "@/lib/auth";
 
@@ -61,6 +63,12 @@ function Router() {
       </Route>
       <Route path="/settings">
         {() => <ProtectedRoute component={SettingsPage} />}
+      </Route>
+      <Route path="/messages">
+        {() => <ProtectedRoute component={MessagesPage} />}
+      </Route>
+      <Route path="/messages/:username">
+        {() => <ProtectedRoute component={MessageThreadPage} />}
       </Route>
       <Route component={NotFound} />
     </Switch>

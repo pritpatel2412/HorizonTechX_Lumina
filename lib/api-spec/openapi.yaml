@@ -13,6 +13,7 @@ tags:
   - name: users
   - name: stories
   - name: notifications
+  - name: messages
 
 paths:
   /healthz:
@@ -772,6 +773,108 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
+  # ── MESSAGES ──────────────────────────────────────────────────────────────────
+  /messages/unread-count:
+    get:
+      operationId: getDmUnreadCount
+      tags: [messages]
+      summary: Get unread DM count
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadCount"
+
+  /messages:
+    get:
+      operationId: getConversations
+      tags: [messages]
+      summary: Get all conversations
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+
+  /messages/{username}:
+    get:
+      operationId: getMessages
+      tags: [messages]
+      summary: Get message thread with a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DirectMessage"
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message to a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectMessage"
+
+  /messages/{username}/read:
+    post:
+      operationId: markMessagesRead
+      tags: [messages]
+      summary: Mark messages from a user as read
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Marked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
 # ── COMPONENTS ────────────────────────────────────────────────────────────────
 components:
   securitySchemes:
@@ -1235,3 +1338,44 @@ components:
       properties:
         count:
           type: integer
+
+    # ── Message schemas ───────────────────────────────────────────────────────
+    DirectMessage:
+      type: object
+      required: [id, content, senderId, receiverId, read, createdAt, sender]
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        senderId:
+          type: integer
+        receiverId:
+          type: integer
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        sender:
+          $ref: "#/components/schemas/UserSummary"
+
+    Conversation:
+      type: object
+      required: [user, lastMessage, unreadCount]
+      properties:
+        user:
+          $ref: "#/components/schemas/UserSummary"
+        lastMessage:
+          $ref: "#/components/schemas/DirectMessage"
+        unreadCount:
+          type: integer
+
+    MessageInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000

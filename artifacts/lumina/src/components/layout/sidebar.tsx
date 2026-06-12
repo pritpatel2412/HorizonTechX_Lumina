@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
-import { useGetMe, useGetUnreadCount, getGetUnreadCountQueryKey } from "@workspace/api-client-react";
+import { useGetMe, useGetUnreadCount, getGetUnreadCountQueryKey, useGetDmUnreadCount, getGetDmUnreadCountQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
-import { Home, Compass, Bell, Bookmark, User, Settings, Plus, LogOut } from "lucide-react";
+import { Home, Compass, Bell, Bookmark, User, Settings, Plus, LogOut, MessageSquare } from "lucide-react";
 import { removeToken } from "@/lib/auth";
 import { useState } from "react";
 import { CreatePostModal } from "@/components/create-post-modal";
@@ -12,12 +12,16 @@ export function Sidebar() {
   const { data: unread } = useGetUnreadCount({
     query: { queryKey: getGetUnreadCountQueryKey(), refetchInterval: 60000 }
   });
+  const { data: dmUnread } = useGetDmUnreadCount({
+    query: { queryKey: getGetDmUnreadCountQueryKey(), refetchInterval: 15000 }
+  });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const navItems = [
     { name: "Home", href: "/feed", icon: Home },
     { name: "Explore", href: "/explore", icon: Compass },
     { name: "Notifications", href: "/notifications", icon: Bell, badge: unread?.count },
+    { name: "Messages", href: "/messages", icon: MessageSquare, badge: dmUnread?.count },
     { name: "Saved", href: "/saved", icon: Bookmark },
     { name: "Profile", href: `/profile/${user?.username}`, icon: User },
     { name: "Settings", href: "/settings", icon: Settings },
@@ -42,7 +46,7 @@ export function Sidebar() {
           {navItems.map((item) => {
             const isActive =
               location === item.href ||
-              (item.href !== "/feed" && location.startsWith(item.href.split(":")[0]));
+              (item.name !== "Home" && location.startsWith(item.href.split(":")[0]));
             return (
               <Link
                 key={item.name}
@@ -61,7 +65,7 @@ export function Sidebar() {
                 <span className="flex-1">{item.name}</span>
                 {!!item.badge && item.badge > 0 && (
                   <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    {item.badge}
+                    {item.badge > 99 ? "99+" : item.badge}
                   </span>
                 )}
               </Link>

@@ -1,9 +1,9 @@
-import { FeedPost, useTogglePostLike, useTogglePostSave } from "@workspace/api-client-react";
+import { FeedPost, useTogglePostLike, useTogglePostSave, useDeletePost, useGetMe } from "@workspace/api-client-react";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal, X } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal, X, Trash2, Link as LinkIcon } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -15,19 +15,36 @@ interface PostCardProps {
 export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
   const toggleLike = useTogglePostLike();
   const toggleSave = useTogglePostSave();
+  const deletePost = useDeletePost();
+  const { data: me } = useGetMe();
   const queryClient = useQueryClient();
 
   const [localLiked, setLocalLiked] = useState(post.liked ?? false);
   const [localLikeCount, setLocalLikeCount] = useState(post.likeCount ?? 0);
   const [localSaved, setLocalSaved] = useState(post.saved ?? false);
   const [showReactions, setShowReactions] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [spotlightImage, setSpotlightImage] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const isOwn = me?.id === post.author.id;
 
   useEffect(() => {
     setLocalLiked(post.liked ?? false);
     setLocalLikeCount(post.likeCount ?? 0);
     setLocalSaved(post.saved ?? false);
   }, [post.liked, post.likeCount, post.saved]);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showMenu]);
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ predicate: q =>
@@ -77,6 +94,25 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
     toast.success("Link copied to clipboard");
   };
 
+  const handleDelete = () => {
+    setShowMenu(false);
+    if (!confirm("Delete this post? This cannot be undone.")) return;
+    deletePost.mutate({ id: post.id }, {
+      onSuccess: () => {
+        toast.success("Post deleted");
+        queryClient.invalidateQueries({ predicate: q =>
+          typeof q.queryKey[0] === "string" &&
+          (q.queryKey[0] as string).startsWith("/api/posts")
+        });
+        queryClient.invalidateQueries({ predicate: q =>
+          typeof q.queryKey[0] === "string" &&
+          (q.queryKey[0] as string).startsWith("/api/users/")
+        });
+      },
+      onError: () => toast.error("Failed to delete post")
+    });
+  };
+
   const renderContent = (text: string) => {
     return text.split(/(#\w+)/g).map((part, i) => {
       if (part.startsWith("#")) {
@@ -94,7 +130,7 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
 
   return (
     <>
-      <div className="lumina-card p-5 mb-4 animate-in fade-in slide-in-from-bottom-2" onClick={() => setShowReactions(false)}>
+      <div className="lumina-card p-5 mb-4 animate-in fade-in slide-in-from-bottom-2" onClick={() => { setShowReactions(false); setShowMenu(false); }}>
         <div className="flex items-center justify-between mb-4">
           <Link href={`/profile/${post.author.username}`} className="flex items-center gap-3 group">
             <img
@@ -112,9 +148,36 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
           </Link>
           <div className="flex items-center gap-2 text-muted-foreground">
             <span className="text-xs">{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
-            <button className="p-1.5 hover:bg-white/5 rounded-md transition-colors">
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
+
+            {/* More menu */}
+            <div className="relative" ref={menuRef}>
+              <button
+                className="p-1.5 hover:bg-white/5 rounded-md transition-colors"
+                onClick={(e) => { e.stopPropagation(); setShowMenu(m => !m); }}
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+              {showMenu && (
+                <div className="absolute right-0 top-full mt-1 w-40 bg-surface-elevated border border-white/10 rounded-xl shadow-xl z-30 overflow-hidden animate-in fade-in slide-in-from-top-1">
+                  <button
+                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm hover:bg-white/5 transition-colors text-left"
+                    onClick={(e) => { e.stopPropagation(); handleShare(e); setShowMenu(false); }}
+                  >
+                    <LinkIcon className="w-4 h-4" />
+                    Copy link
+                  </button>
+                  {isOwn && (
+                    <button
+                      className="flex items-center gap-2 w-full px-4 py-2.5 text-sm hover:bg-destructive/10 text-destructive transition-colors text-left"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete post
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

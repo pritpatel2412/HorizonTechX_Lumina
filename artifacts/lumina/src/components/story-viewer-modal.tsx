@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { StoryGroup, useViewStory, getGetStoriesQueryKey } from "@workspace/api-client-react";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { StoryGroup, useViewStory, useDeleteStory, useGetMe, getGetStoriesQueryKey } from "@workspace/api-client-react";
+import { X, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface StoryViewerModalProps {
   groups: StoryGroup[];
@@ -13,8 +14,11 @@ export function StoryViewerModal({ groups, initialGroupIndex, onClose }: StoryVi
   const [groupIdx, setGroupIdx] = useState(initialGroupIndex);
   const [storyIdx, setStoryIdx] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const viewStory = useViewStory();
+  const deleteStory = useDeleteStory();
+  const { data: me } = useGetMe();
   const queryClient = useQueryClient();
 
   const DURATION = 5000;
@@ -22,6 +26,7 @@ export function StoryViewerModal({ groups, initialGroupIndex, onClose }: StoryVi
 
   const currentGroup = groups[groupIdx];
   const currentStory = currentGroup?.stories[storyIdx];
+  const isOwn = me?.id === currentGroup?.user?.id;
 
   const goNext = useCallback(() => {
     if (!currentGroup) return;
@@ -59,6 +64,7 @@ export function StoryViewerModal({ groups, initialGroupIndex, onClose }: StoryVi
 
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
+    if (paused) return;
     setProgress(0);
     timerRef.current = setInterval(() => {
       setProgress(p => {
@@ -72,7 +78,7 @@ export function StoryViewerModal({ groups, initialGroupIndex, onClose }: StoryVi
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [storyIdx, groupIdx, goNext]);
+  }, [storyIdx, groupIdx, goNext, paused]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -83,6 +89,23 @@ export function StoryViewerModal({ groups, initialGroupIndex, onClose }: StoryVi
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [goNext, goPrev, onClose]);
+
+  const handleDelete = () => {
+    if (!currentStory) return;
+    if (!confirm("Delete this story?")) return;
+    setPaused(true);
+    deleteStory.mutate({ id: currentStory.id }, {
+      onSuccess: () => {
+        toast.success("Story deleted");
+        queryClient.invalidateQueries({ queryKey: getGetStoriesQueryKey() });
+        onClose();
+      },
+      onError: () => {
+        toast.error("Failed to delete story");
+        setPaused(false);
+      }
+    });
+  };
 
   if (!currentGroup || !currentStory) return null;
 
@@ -129,6 +152,15 @@ export function StoryViewerModal({ groups, initialGroupIndex, onClose }: StoryVi
             <div className="font-semibold text-white text-sm">{currentGroup.user.displayName}</div>
             <div className="text-white/70 text-xs">@{currentGroup.user.username}</div>
           </div>
+          {isOwn && (
+            <button
+              onClick={handleDelete}
+              className="p-2 text-white/70 hover:text-red-400 hover:bg-white/10 rounded-full transition-colors"
+              title="Delete story"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
           <button onClick={onClose} className="p-2 text-white hover:bg-white/10 rounded-full transition-colors">
             <X className="w-5 h-5" />
           </button>

@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/layout/app-layout";
-import { useGetNotifications, useMarkAllNotificationsRead, useMarkNotificationRead, getGetNotificationsQueryKey } from "@workspace/api-client-react";
+import { useGetNotifications, useMarkAllNotificationsRead, useMarkNotificationRead, getGetNotificationsQueryKey, getGetUnreadCountQueryKey } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bell, Heart, MessageCircle, UserPlus, AtSign, CheckCheck, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -19,6 +19,7 @@ export default function NotificationsPage() {
     markAllRead.mutate(undefined, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetNotificationsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetUnreadCountQueryKey() });
       }
     });
   };
@@ -28,6 +29,7 @@ export default function NotificationsPage() {
       markRead.mutate({ id }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetNotificationsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetUnreadCountQueryKey() });
         }
       });
     }

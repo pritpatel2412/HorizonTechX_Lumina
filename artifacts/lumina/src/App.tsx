@@ -29,10 +29,18 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
   return <Component {...rest} />;
 }
 
+function AuthRedirect() {
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    if (getToken()) setLocation("/feed");
+  }, [setLocation]);
+  return <AuthPage />;
+}
+
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={AuthPage} />
+      <Route path="/" component={AuthRedirect} />
       <Route path="/feed">
         {() => <ProtectedRoute component={FeedPage} />}
       </Route>

@@ -49,7 +49,7 @@ export default function PostDetailPage() {
     <AppLayout>
       <div className="p-4 sm:p-6 w-full max-w-2xl mx-auto space-y-4 pb-24">
         <button
-          onClick={() => navigate("~/")}
+          onClick={() => window.history.length > 1 ? window.history.back() : navigate("/feed")}
           className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors text-sm mb-2"
         >
           <ArrowLeft className="w-4 h-4" />

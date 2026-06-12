@@ -31,6 +31,16 @@ export default function FeedPage() {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const handler = () => {
+      setOffset(0);
+      setAllPosts([]);
+      setHasMore(true);
+    };
+    window.addEventListener("lumina:post-created", handler);
+    return () => window.removeEventListener("lumina:post-created", handler);
+  }, []);
+
+  useEffect(() => {
     if (!feedPosts) return;
     if (offset === 0) {
       setAllPosts(feedPosts);

@@ -59,11 +59,12 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
     }, {
       onSuccess: () => {
         toast.success("Post created!");
-        queryClient.invalidateQueries({ queryKey: getGetFeedQueryKey() });
+        queryClient.removeQueries({ queryKey: getGetFeedQueryKey() });
         queryClient.invalidateQueries({ predicate: q =>
           typeof q.queryKey[0] === "string" &&
           (q.queryKey[0] as string).startsWith("/api/users/")
         });
+        window.dispatchEvent(new CustomEvent("lumina:post-created"));
         setContent(""); setImageUrl(""); setImageUrl2(""); setPostType("post");
         onClose();
       },

@@ -18,6 +18,7 @@ export interface FeedPost {
   postType: string;
   audience?: FeedPostAudience;
   views: number;
+  isPinned?: boolean;
   /** @nullable */
   scheduledAt?: Date | null;
   createdAt: Date;

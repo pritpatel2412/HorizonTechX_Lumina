@@ -169,6 +169,7 @@ export interface FeedPost {
   postType: string;
   audience?: FeedPostAudience;
   views: number;
+  isPinned?: boolean;
   /** @nullable */
   scheduledAt?: string | null;
   createdAt: string;
@@ -352,6 +353,10 @@ tag?: string | null;
 export type GetSavedPostsParams = {
 offset?: number;
 limit?: number;
+};
+
+export type PinPost200 = {
+  isPinned: boolean;
 };
 
 export type SearchUsersParams = {

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useCreatePost, getGetFeedQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ImagePlus, X, Loader2, Globe, Lock } from "lucide-react";
+import { ImagePlus, X, Loader2, Globe, Lock, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,8 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
   const [imageUrl2, setImageUrl2] = useState("");
   const [compressing, setCompressing] = useState(false);
   const [compressing2, setCompressing2] = useState(false);
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState("");
   const fileRef1 = useRef<HTMLInputElement>(null);
   const fileRef2 = useRef<HTMLInputElement>(null);
 
@@ -50,6 +52,15 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
 
   const handleSubmit = () => {
     if (!content.trim()) return;
+
+    if (scheduleEnabled && scheduledAt) {
+      const scheduled = new Date(scheduledAt);
+      if (scheduled <= new Date()) {
+        toast.error("Scheduled time must be in the future");
+        return;
+      }
+    }
+
     createPost.mutate({
       data: {
         content,
@@ -57,10 +68,16 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
         audience,
         imageUrl: imageUrl || undefined,
         imageUrl2: postType === "moment" ? imageUrl2 || undefined : undefined,
+        scheduledAt: scheduleEnabled && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
       }
     }, {
       onSuccess: () => {
-        toast.success(audience === "circle" ? "Posted to your Circle 🔒" : "Post created!");
+        if (scheduleEnabled && scheduledAt) {
+          const scheduled = new Date(scheduledAt);
+          toast.success(`Post scheduled for ${scheduled.toLocaleDateString()} at ${scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
+        } else {
+          toast.success(audience === "circle" ? "Posted to your Circle 🔒" : "Post created!");
+        }
         queryClient.removeQueries({ queryKey: getGetFeedQueryKey() });
         queryClient.invalidateQueries({ predicate: q =>
           typeof q.queryKey[0] === "string" &&
@@ -68,6 +85,7 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
         });
         window.dispatchEvent(new CustomEvent("lumina:post-created"));
         setContent(""); setImageUrl(""); setImageUrl2(""); setPostType("post"); setAudience("public");
+        setScheduleEnabled(false); setScheduledAt("");
         onClose();
       },
       onError: () => toast.error("Failed to create post")
@@ -75,6 +93,9 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
   };
 
   const handleClose = () => { if (!createPost.isPending) onClose(); };
+
+  const minDateTimeLocal = new Date(Date.now() + 5 * 60 * 1000)
+    .toISOString().slice(0, 16);
 
   const ImageSlot = ({
     value, onFile, onClear, isCompressing, slot, accent
@@ -172,6 +193,7 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
               </button>
             </div>
           </div>
+
           {audience === "circle" && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
               <Lock className="w-3.5 h-3.5 shrink-0" />
@@ -194,16 +216,55 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
           ) : (
             <ImageSlot value={imageUrl} onFile={(f) => handleFile(f, 1)} onClear={() => setImageUrl("")} isCompressing={compressing} slot={1} />
           )}
+
+          {/* Schedule toggle */}
+          <div className="border-t border-white/5 pt-3">
+            <button
+              className={cn(
+                "flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg w-full transition-colors",
+                scheduleEnabled ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" : "text-muted-foreground hover:text-white hover:bg-white/5"
+              )}
+              onClick={() => { setScheduleEnabled(s => !s); if (scheduleEnabled) setScheduledAt(""); }}
+            >
+              <Clock className="w-4 h-4" />
+              {scheduleEnabled ? "Scheduling enabled — tap to cancel" : "Schedule for later"}
+            </button>
+
+            {scheduleEnabled && (
+              <div className="mt-2 animate-in slide-in-from-top-1">
+                <input
+                  type="datetime-local"
+                  min={minDateTimeLocal}
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
+                  className="w-full bg-surface-elevated border border-sky-500/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500/60 [color-scheme:dark]"
+                />
+                {scheduledAt && (
+                  <p className="text-xs text-sky-400 mt-1.5 px-1">
+                    Will publish on {new Date(scheduledAt).toLocaleDateString()} at {new Date(scheduledAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="p-4 border-t border-white/5 flex items-center justify-end gap-3 bg-surface-elevated">
           <Button variant="ghost" onClick={handleClose} className="text-muted-foreground">Cancel</Button>
           <Button
             onClick={handleSubmit}
-            disabled={!content.trim() || createPost.isPending || compressing || compressing2 || (postType === "moment" && (!imageUrl || !imageUrl2))}
-            className="btn-primary px-6"
+            disabled={
+              !content.trim() || createPost.isPending || compressing || compressing2 ||
+              (postType === "moment" && (!imageUrl || !imageUrl2)) ||
+              (scheduleEnabled && !scheduledAt)
+            }
+            className={cn("px-6", scheduleEnabled ? "bg-sky-600 hover:bg-sky-700 text-white" : "btn-primary")}
           >
-            {createPost.isPending ? "Posting…" : "Post"}
+            {createPost.isPending
+              ? "Posting…"
+              : scheduleEnabled
+              ? "Schedule Post"
+              : "Post"}
           </Button>
         </div>
       </DialogContent>

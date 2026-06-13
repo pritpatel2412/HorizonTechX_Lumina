@@ -112,11 +112,15 @@ router.get("/users/:username/posts", optionalAuth, async (req, res): Promise<voi
     return;
   }
 
+  const isOwner = uid !== null && uid === user.id;
+  const scheduledFilter = isOwner ? "" : "AND (p.scheduled_at IS NULL OR p.scheduled_at <= NOW())";
+
   const posts = await buildFeedQuery({
-    where: `p.user_id = ${user.id} AND (p.scheduled_at IS NULL OR p.scheduled_at <= NOW())`,
+    where: `p.user_id = ${user.id} ${scheduledFilter}`,
     currentUserId: uid,
-    limit: 30,
+    limit: 50,
     offset: 0,
+    orderBy: "p.is_pinned DESC, p.created_at DESC",
   });
 
   res.json(posts);

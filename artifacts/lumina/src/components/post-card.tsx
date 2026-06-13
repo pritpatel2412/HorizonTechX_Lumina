@@ -1,6 +1,6 @@
-import { FeedPost, useTogglePostLike, useTogglePostSave, useDeletePost, useGetMe } from "@workspace/api-client-react";
+import { FeedPost, useTogglePostLike, useTogglePostSave, useDeletePost, useGetMe, usePinPost } from "@workspace/api-client-react";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal, X, Trash2, Link as LinkIcon, Lock } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal, X, Trash2, Link as LinkIcon, Lock, Pin, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
@@ -16,6 +16,7 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
   const toggleLike = useTogglePostLike();
   const toggleSave = useTogglePostSave();
   const deletePost = useDeletePost();
+  const pinPost = usePinPost();
   const { data: me } = useGetMe();
   const queryClient = useQueryClient();
 
@@ -113,6 +114,20 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
     });
   };
 
+  const handlePin = () => {
+    setShowMenu(false);
+    pinPost.mutate({ id: post.id }, {
+      onSuccess: (data) => {
+        toast.success(data.isPinned ? "Post pinned to your profile" : "Post unpinned");
+        queryClient.invalidateQueries({ predicate: q =>
+          typeof q.queryKey[0] === "string" &&
+          (q.queryKey[0] as string).startsWith("/api/users/")
+        });
+      },
+      onError: (err: any) => toast.error(err?.error || "Failed to pin post")
+    });
+  };
+
   const renderContent = (text: string) => {
     return text.split(/(#\w+)/g).map((part, i) => {
       if (part.startsWith("#")) {
@@ -147,13 +162,26 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
             </div>
           </Link>
           <div className="flex items-center gap-2 text-muted-foreground">
+            {post.isPinned && (
+              <span title="Pinned post" className="flex items-center gap-1 text-[10px] font-medium text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full border border-amber-500/20">
+                <Pin className="w-2.5 h-2.5" />
+                Pinned
+              </span>
+            )}
             {(post as any).audience === "circle" && (
               <span title="Close Friends only" className="flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20">
                 <Lock className="w-2.5 h-2.5" />
                 Circle
               </span>
             )}
-            <span className="text-xs">{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
+            {post.scheduledAt && new Date(post.scheduledAt) > new Date() ? (
+              <span title={`Scheduled for ${new Date(post.scheduledAt).toLocaleString()}`} className="flex items-center gap-1 text-[10px] font-medium text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded-full border border-sky-500/20">
+                <Clock className="w-2.5 h-2.5" />
+                Scheduled
+              </span>
+            ) : (
+              <span className="text-xs">{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
+            )}
 
             {/* More menu */}
             <div className="relative" ref={menuRef}>
@@ -164,7 +192,7 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
                 <MoreHorizontal className="w-4 h-4" />
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-full mt-1 w-40 bg-surface-elevated border border-white/10 rounded-xl shadow-xl z-30 overflow-hidden animate-in fade-in slide-in-from-top-1">
+                <div className="absolute right-0 top-full mt-1 w-44 bg-surface-elevated border border-white/10 rounded-xl shadow-xl z-30 overflow-hidden animate-in fade-in slide-in-from-top-1">
                   <button
                     className="flex items-center gap-2 w-full px-4 py-2.5 text-sm hover:bg-white/5 transition-colors text-left"
                     onClick={(e) => { e.stopPropagation(); handleShare(e); setShowMenu(false); }}
@@ -173,13 +201,22 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
                     Copy link
                   </button>
                   {isOwn && (
-                    <button
-                      className="flex items-center gap-2 w-full px-4 py-2.5 text-sm hover:bg-destructive/10 text-destructive transition-colors text-left"
-                      onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete post
-                    </button>
+                    <>
+                      <button
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm hover:bg-amber-500/10 text-amber-400 transition-colors text-left"
+                        onClick={(e) => { e.stopPropagation(); handlePin(); }}
+                      >
+                        <Pin className="w-4 h-4" />
+                        {post.isPinned ? "Unpin post" : "Pin to profile"}
+                      </button>
+                      <button
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm hover:bg-destructive/10 text-destructive transition-colors text-left"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete post
+                      </button>
+                    </>
                   )}
                 </div>
               )}

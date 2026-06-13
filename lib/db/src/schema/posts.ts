@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, varchar, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -11,6 +11,7 @@ export const postsTable = pgTable("posts", {
   postType: text("post_type").notNull().default("post"),
   views: integer("views").notNull().default(0),
   audience: varchar("audience", { length: 20 }).notNull().default("public"),
+  isPinned: boolean("is_pinned").notNull().default(false),
   scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

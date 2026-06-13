@@ -39,6 +39,7 @@ import type {
   MessageInput,
   Notification,
   PasswordInput,
+  PinPost200,
   PostDetail,
   PostInput,
   ProfileInput,
@@ -1265,6 +1266,76 @@ export const useTogglePostSave = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getTogglePostSaveMutationOptions(options));
+    }
+
+export const getPinPostUrl = (id: number,) => {
+
+
+
+
+  return `/api/posts/${id}/pin`
+}
+
+/**
+ * @summary Toggle pin on a post (max 2 pinned per user, own posts only)
+ */
+export const pinPost = async (id: number, options?: RequestInit): Promise<PinPost200> => {
+
+  return customFetch<PinPost200>(getPinPostUrl(id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+
+export const getPinPostMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinPost>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof pinPost>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['pinPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof pinPost>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  pinPost(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PinPostMutationResult = NonNullable<Awaited<ReturnType<typeof pinPost>>>
+
+    export type PinPostMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Toggle pin on a post (max 2 pinned per user, own posts only)
+ */
+export const usePinPost = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinPost>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof pinPost>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getPinPostMutationOptions(options));
     }
 
 export const getGetPostCommentsUrl = (id: number,) => {

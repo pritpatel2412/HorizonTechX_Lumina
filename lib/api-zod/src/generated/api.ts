@@ -150,6 +150,7 @@ export const GetFeedResponseItem = zod.object({
   "postType": zod.string(),
   "audience": zod.enum(['public', 'circle']).optional(),
   "views": zod.number(),
+  "isPinned": zod.boolean().optional(),
   "scheduledAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date(),
   "author": zod.object({
@@ -214,6 +215,7 @@ export const GetExplorePostsResponseItem = zod.object({
   "postType": zod.string(),
   "audience": zod.enum(['public', 'circle']).optional(),
   "views": zod.number(),
+  "isPinned": zod.boolean().optional(),
   "scheduledAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date(),
   "author": zod.object({
@@ -277,6 +279,7 @@ export const GetSavedPostsResponseItem = zod.object({
   "postType": zod.string(),
   "audience": zod.enum(['public', 'circle']).optional(),
   "views": zod.number(),
+  "isPinned": zod.boolean().optional(),
   "scheduledAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date(),
   "author": zod.object({
@@ -443,6 +446,18 @@ export const TogglePostSaveResponse = zod.object({
 
 
 /**
+ * @summary Toggle pin on a post (max 2 pinned per user, own posts only)
+ */
+export const PinPostParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const PinPostResponse = zod.object({
+  "isPinned": zod.boolean()
+})
+
+
+/**
  * @summary Get comments for a post
  */
 export const GetPostCommentsParams = zod.object({
@@ -585,6 +600,7 @@ export const ListUserPostsResponseItem = zod.object({
   "postType": zod.string(),
   "audience": zod.enum(['public', 'circle']).optional(),
   "views": zod.number(),
+  "isPinned": zod.boolean().optional(),
   "scheduledAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date(),
   "author": zod.object({

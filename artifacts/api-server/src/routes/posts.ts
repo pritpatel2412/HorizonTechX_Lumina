@@ -232,6 +232,40 @@ router.post("/posts/:id/like", requireAuth, async (req, res): Promise<void> => {
   res.json({ liked, count: Number(count), reaction: liked ? reaction : null });
 });
 
+// ── Pin post ──────────────────────────────────────────────────────────────────
+router.patch("/posts/:id/pin", requireAuth, async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id as string, 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
+  const [post] = await db.select({ userId: postsTable.userId, isPinned: postsTable.isPinned })
+    .from(postsTable).where(eq(postsTable.id, id));
+
+  if (!post) {
+    res.status(404).json({ error: "Post not found" });
+    return;
+  }
+  if (post.userId !== req.userId) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  if (!post.isPinned) {
+    const [{ count }] = await db.execute(sql.raw(`SELECT COUNT(*) AS count FROM posts WHERE user_id = ${req.userId} AND is_pinned = true`))
+      .then(r => r.rows as any[]);
+    if (Number(count) >= 2) {
+      res.status(409).json({ error: "You can only pin up to 2 posts. Unpin one first." });
+      return;
+    }
+  }
+
+  const newPinned = !post.isPinned;
+  await db.update(postsTable).set({ isPinned: newPinned }).where(eq(postsTable.id, id));
+  res.json({ isPinned: newPinned });
+});
+
 // ── Toggle post save ──────────────────────────────────────────────────────────
 router.post("/posts/:id/save", requireAuth, async (req, res): Promise<void> => {
   const params = TogglePostSaveParams.safeParse(req.params);

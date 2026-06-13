@@ -27,6 +27,7 @@ export * from './messageInput';
 export * from './notification';
 export * from './notificationType';
 export * from './passwordInput';
+export * from './pinPost200';
 export * from './postDetail';
 export * from './postInput';
 export * from './postInputAudience';

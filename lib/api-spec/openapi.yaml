@@ -385,6 +385,49 @@ paths:
               schema:
                 $ref: "#/components/schemas/SaveResult"
 
+  /posts/{id}/pin:
+    patch:
+      operationId: pinPost
+      tags: [posts]
+      summary: Toggle pin on a post (max 2 pinned per user, own posts only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Pin toggled
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [isPinned]
+                properties:
+                  isPinned:
+                    type: boolean
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Already have 2 pinned posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /posts/{id}/comments:
     get:
       operationId: getPostComments
@@ -1181,6 +1224,8 @@ components:
           enum: [public, circle]
         views:
           type: integer
+        isPinned:
+          type: boolean
         scheduledAt:
           type: ["string", "null"]
           format: date-time

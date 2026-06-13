@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useCreatePost, getGetFeedQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ImagePlus, X, Loader2 } from "lucide-react";
+import { ImagePlus, X, Loader2, Globe, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ interface CreatePostModalProps {
 export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
   const [content, setContent] = useState("");
   const [postType, setPostType] = useState<"post" | "moment">("post");
+  const [audience, setAudience] = useState<"public" | "circle">("public");
   const [imageUrl, setImageUrl] = useState("");
   const [imageUrl2, setImageUrl2] = useState("");
   const [compressing, setCompressing] = useState(false);
@@ -53,19 +54,20 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
       data: {
         content,
         postType,
+        audience,
         imageUrl: imageUrl || undefined,
         imageUrl2: postType === "moment" ? imageUrl2 || undefined : undefined,
       }
     }, {
       onSuccess: () => {
-        toast.success("Post created!");
+        toast.success(audience === "circle" ? "Posted to your Circle 🔒" : "Post created!");
         queryClient.removeQueries({ queryKey: getGetFeedQueryKey() });
         queryClient.invalidateQueries({ predicate: q =>
           typeof q.queryKey[0] === "string" &&
           (q.queryKey[0] as string).startsWith("/api/users/")
         });
         window.dispatchEvent(new CustomEvent("lumina:post-created"));
-        setContent(""); setImageUrl(""); setImageUrl2(""); setPostType("post");
+        setContent(""); setImageUrl(""); setImageUrl2(""); setPostType("post"); setAudience("public");
         onClose();
       },
       onError: () => toast.error("Failed to create post")
@@ -136,20 +138,46 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
         </DialogHeader>
 
         <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto lumina-scrollbar">
-          <div className="flex gap-2 p-1 bg-surface-elevated rounded-lg">
-            <button
-              className={cn("flex-1 py-1.5 text-sm rounded-md font-medium transition-colors", postType === "post" ? "bg-white/10 text-white" : "text-muted-foreground")}
-              onClick={() => setPostType("post")}
-            >
-              Standard
-            </button>
-            <button
-              className={cn("flex-1 py-1.5 text-sm rounded-md font-medium transition-colors", postType === "moment" ? "bg-primary text-white" : "text-muted-foreground")}
-              onClick={() => setPostType("moment")}
-            >
-              Moment ✨
-            </button>
+          <div className="flex gap-2">
+            <div className="flex gap-1 p-1 bg-surface-elevated rounded-lg flex-1">
+              <button
+                className={cn("flex-1 py-1.5 text-sm rounded-md font-medium transition-colors", postType === "post" ? "bg-white/10 text-white" : "text-muted-foreground")}
+                onClick={() => setPostType("post")}
+              >
+                Standard
+              </button>
+              <button
+                className={cn("flex-1 py-1.5 text-sm rounded-md font-medium transition-colors", postType === "moment" ? "bg-primary text-white" : "text-muted-foreground")}
+                onClick={() => setPostType("moment")}
+              >
+                Moment ✨
+              </button>
+            </div>
+            <div className="flex gap-1 p-1 bg-surface-elevated rounded-lg">
+              <button
+                title="Visible to everyone"
+                className={cn("px-2.5 py-1.5 rounded-md transition-colors flex items-center gap-1.5 text-sm font-medium", audience === "public" ? "bg-white/10 text-white" : "text-muted-foreground hover:text-white")}
+                onClick={() => setAudience("public")}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Public</span>
+              </button>
+              <button
+                title="Only visible to your Close Friends circle"
+                className={cn("px-2.5 py-1.5 rounded-md transition-colors flex items-center gap-1.5 text-sm font-medium", audience === "circle" ? "bg-emerald-500/20 text-emerald-400" : "text-muted-foreground hover:text-white")}
+                onClick={() => setAudience("circle")}
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Circle</span>
+              </button>
+            </div>
           </div>
+          {audience === "circle" && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
+              <Lock className="w-3.5 h-3.5 shrink-0" />
+              Only your Close Friends circle will see this post.
+            </div>
+          )}
 
           <Textarea
             placeholder="What's on your mind?"

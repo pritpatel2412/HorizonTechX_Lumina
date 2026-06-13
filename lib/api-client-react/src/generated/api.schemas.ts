@@ -112,6 +112,14 @@ export const PostInputPostType = {
   moment: 'moment',
 } as const;
 
+export type PostInputAudience = typeof PostInputAudience[keyof typeof PostInputAudience];
+
+
+export const PostInputAudience = {
+  public: 'public',
+  circle: 'circle',
+} as const;
+
 export interface PostInput {
   /** @minLength 1 */
   content: string;
@@ -123,9 +131,18 @@ export interface PostInput {
      */
   imageUrl2?: string | null;
   postType?: PostInputPostType;
+  audience?: PostInputAudience;
   /** @nullable */
   scheduledAt?: string | null;
 }
+
+export type FeedPostAudience = typeof FeedPostAudience[keyof typeof FeedPostAudience];
+
+
+export const FeedPostAudience = {
+  public: 'public',
+  circle: 'circle',
+} as const;
 
 export interface ReactionCount {
   reaction: string;
@@ -150,6 +167,7 @@ export interface FeedPost {
   imageUrl: string;
   imageUrl2: string;
   postType: string;
+  audience?: FeedPostAudience;
   views: number;
   /** @nullable */
   scheduledAt?: string | null;

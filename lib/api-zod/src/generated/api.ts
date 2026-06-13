@@ -140,6 +140,7 @@ export const GetFeedResponseItem = zod.object({
   "imageUrl": zod.string(),
   "imageUrl2": zod.string(),
   "postType": zod.string(),
+  "audience": zod.enum(['public', 'circle']).optional(),
   "views": zod.number(),
   "scheduledAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date(),
@@ -203,6 +204,7 @@ export const GetExplorePostsResponseItem = zod.object({
   "imageUrl": zod.string(),
   "imageUrl2": zod.string(),
   "postType": zod.string(),
+  "audience": zod.enum(['public', 'circle']).optional(),
   "views": zod.number(),
   "scheduledAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date(),
@@ -265,6 +267,7 @@ export const GetSavedPostsResponseItem = zod.object({
   "imageUrl": zod.string(),
   "imageUrl2": zod.string(),
   "postType": zod.string(),
+  "audience": zod.enum(['public', 'circle']).optional(),
   "views": zod.number(),
   "scheduledAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date(),
@@ -325,12 +328,14 @@ export const GetTrendingTagsResponse = zod.array(GetTrendingTagsResponseItem)
  */
 
 export const createPostBodyPostTypeDefault = `post`;
+export const createPostBodyAudienceDefault = `public`;
 
 export const CreatePostBody = zod.object({
   "content": zod.string().min(1),
   "imageUrl": zod.string().nullish(),
   "imageUrl2": zod.string().nullish().describe('Second image for Moment posts'),
   "postType": zod.enum(['post', 'moment']).default(createPostBodyPostTypeDefault),
+  "audience": zod.enum(['public', 'circle']).default(createPostBodyAudienceDefault),
   "scheduledAt": zod.coerce.date().nullish()
 })
 
@@ -570,6 +575,7 @@ export const ListUserPostsResponseItem = zod.object({
   "imageUrl": zod.string(),
   "imageUrl2": zod.string(),
   "postType": zod.string(),
+  "audience": zod.enum(['public', 'circle']).optional(),
   "views": zod.number(),
   "scheduledAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date(),
@@ -912,6 +918,46 @@ export const MarkMessagesReadParams = zod.object({
 })
 
 export const MarkMessagesReadResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Get my close friends list
+ */
+export const GetCircleMembersResponseItem = zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "avatarUrl": zod.string(),
+  "verified": zod.boolean(),
+  "bio": zod.string().optional(),
+  "isFollowing": zod.boolean().optional(),
+  "followerCount": zod.number().optional()
+})
+export const GetCircleMembersResponse = zod.array(GetCircleMembersResponseItem)
+
+
+/**
+ * @summary Add a user to my close friends circle
+ */
+export const AddCircleMemberParams = zod.object({
+  "username": zod.coerce.string()
+})
+
+export const AddCircleMemberResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Remove a user from my close friends circle
+ */
+export const RemoveCircleMemberParams = zod.object({
+  "username": zod.coerce.string()
+})
+
+export const RemoveCircleMemberResponse = zod.object({
   "success": zod.boolean()
 })
 

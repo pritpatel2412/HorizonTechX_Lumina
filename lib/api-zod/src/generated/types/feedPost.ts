@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Comment } from './comment';
+import type { FeedPostAudience } from './feedPostAudience';
 import type { ReactionCount } from './reactionCount';
 import type { UserSummary } from './userSummary';
 
@@ -15,6 +16,7 @@ export interface FeedPost {
   imageUrl: string;
   imageUrl2: string;
   postType: string;
+  audience?: FeedPostAudience;
   views: number;
   /** @nullable */
   scheduledAt?: Date | null;

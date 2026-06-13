@@ -14,6 +14,7 @@ tags:
   - name: stories
   - name: notifications
   - name: messages
+  - name: circles
 
 paths:
   /healthz:
@@ -875,6 +876,66 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
+  # ── CIRCLES ───────────────────────────────────────────────────────────────
+  /circles/members:
+    get:
+      operationId: getCircleMembers
+      tags: [circles]
+      summary: Get my close friends list
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Circle members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserSummary"
+
+  /circles/members/{username}:
+    post:
+      operationId: addCircleMember
+      tags: [circles]
+      summary: Add a user to my close friends circle
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: User not found
+    delete:
+      operationId: removeCircleMember
+      tags: [circles]
+      summary: Remove a user from my close friends circle
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
 # ── COMPONENTS ────────────────────────────────────────────────────────────────
 components:
   securitySchemes:
@@ -1070,6 +1131,10 @@ components:
           type: string
           enum: [post, moment]
           default: post
+        audience:
+          type: string
+          enum: [public, circle]
+          default: public
         scheduledAt:
           type: ["string", "null"]
           format: date-time
@@ -1088,6 +1153,9 @@ components:
           type: string
         postType:
           type: string
+        audience:
+          type: string
+          enum: [public, circle]
         views:
           type: integer
         scheduledAt:

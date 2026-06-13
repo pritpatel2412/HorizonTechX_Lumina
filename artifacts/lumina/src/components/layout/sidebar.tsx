@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useGetMe, useGetUnreadCount, getGetUnreadCountQueryKey, useGetDmUnreadCount, getGetDmUnreadCountQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
-import { Home, Compass, Bell, Bookmark, User, Settings, Plus, LogOut, MessageSquare } from "lucide-react";
+import { Home, Compass, Bell, Bookmark, User, Settings, Plus, LogOut, MessageSquare, Lock } from "lucide-react";
 import { removeToken } from "@/lib/auth";
 import { useState } from "react";
 import { CreatePostModal } from "@/components/create-post-modal";
@@ -22,6 +22,7 @@ export function Sidebar() {
     { name: "Explore", href: "/explore", icon: Compass },
     { name: "Notifications", href: "/notifications", icon: Bell, badge: unread?.count },
     { name: "Messages", href: "/messages", icon: MessageSquare, badge: dmUnread?.count },
+    { name: "Close Friends", href: "/circle", icon: Lock },
     { name: "Saved", href: "/saved", icon: Bookmark },
     { name: "Profile", href: `/profile/${user?.username}`, icon: User },
     { name: "Settings", href: "/settings", icon: Settings },

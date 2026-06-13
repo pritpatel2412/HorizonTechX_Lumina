@@ -7,3 +7,4 @@ export * from "./stories";
 export * from "./notifications";
 export * from "./saved_posts";
 export * from "./messages";
+export * from "./close_friends";

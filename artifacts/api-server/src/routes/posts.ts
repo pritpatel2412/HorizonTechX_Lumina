@@ -21,7 +21,9 @@ router.get("/posts/feed", requireAuth, async (req, res): Promise<void> => {
   const uid = req.userId!;
 
   const posts = await buildFeedQuery({
-    where: `(p.user_id = ${uid} OR p.user_id IN (SELECT following_id FROM follows WHERE follower_id = ${uid})) AND (p.scheduled_at IS NULL OR p.scheduled_at <= NOW())`,
+    where: `(p.user_id = ${uid} OR p.user_id IN (SELECT following_id FROM follows WHERE follower_id = ${uid}))
+      AND (p.scheduled_at IS NULL OR p.scheduled_at <= NOW())
+      AND (p.audience = 'public' OR p.user_id = ${uid} OR EXISTS(SELECT 1 FROM close_friends WHERE user_id = p.user_id AND friend_id = ${uid}))`,
     currentUserId: uid,
     limit,
     offset,
@@ -105,7 +107,7 @@ router.post("/posts", requireAuth, async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { content, imageUrl, imageUrl2, postType, scheduledAt } = parsed.data;
+  const { content, imageUrl, imageUrl2, postType, audience, scheduledAt } = parsed.data;
 
   const [post] = await db.insert(postsTable).values({
     userId: req.userId!,
@@ -113,6 +115,7 @@ router.post("/posts", requireAuth, async (req, res): Promise<void> => {
     imageUrl: imageUrl ?? "",
     imageUrl2: imageUrl2 ?? "",
     postType: postType ?? "post",
+    audience: (audience as "public" | "circle") ?? "public",
     scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
   }).returning();
 

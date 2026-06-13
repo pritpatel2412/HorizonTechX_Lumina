@@ -1,6 +1,6 @@
 import { FeedPost, useTogglePostLike, useTogglePostSave, useDeletePost, useGetMe } from "@workspace/api-client-react";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal, X, Trash2, Link as LinkIcon } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal, X, Trash2, Link as LinkIcon, Lock } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
@@ -147,6 +147,12 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
             </div>
           </Link>
           <div className="flex items-center gap-2 text-muted-foreground">
+            {(post as any).audience === "circle" && (
+              <span title="Close Friends only" className="flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20">
+                <Lock className="w-2.5 h-2.5" />
+                Circle
+              </span>
+            )}
             <span className="text-xs">{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
 
             {/* More menu */}

@@ -13,6 +13,7 @@ import PostDetailPage from "@/pages/post-detail";
 import SettingsPage from "@/pages/settings";
 import MessagesPage from "@/pages/messages";
 import MessageThreadPage from "@/pages/message-thread";
+import CirclePage from "@/pages/circle";
 import { useEffect } from "react";
 import { getToken } from "@/lib/auth";
 
@@ -69,6 +70,9 @@ function Router() {
       </Route>
       <Route path="/messages/:username">
         {() => <ProtectedRoute component={MessageThreadPage} />}
+      </Route>
+      <Route path="/circle">
+        {() => <ProtectedRoute component={CirclePage} />}
       </Route>
       <Route component={NotFound} />
     </Switch>

@@ -5,6 +5,7 @@
  * LUMINA social network API
  * OpenAPI spec version: 0.1.0
  */
+import type { PostInputAudience } from './postInputAudience';
 import type { PostInputPostType } from './postInputPostType';
 
 export interface PostInput {
@@ -18,6 +19,7 @@ export interface PostInput {
      */
   imageUrl2?: string | null;
   postType?: PostInputPostType;
+  audience?: PostInputAudience;
   /** @nullable */
   scheduledAt?: Date | null;
 }

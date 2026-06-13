@@ -6,6 +6,7 @@ import usersRouter from "./users";
 import storiesRouter from "./stories";
 import notificationsRouter from "./notifications";
 import messagesRouter from "./messages";
+import circlesRouter from "./circles";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(usersRouter);
 router.use(storiesRouter);
 router.use(notificationsRouter);
 router.use(messagesRouter);
+router.use(circlesRouter);
 
 export default router;

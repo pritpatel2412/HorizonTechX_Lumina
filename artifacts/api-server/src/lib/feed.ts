@@ -26,7 +26,7 @@ export async function buildFeedQuery(opts: {
       GROUP BY post_id
     )
     SELECT
-      p.id, p.content, p.image_url, p.image_url2, p.post_type, p.views, p.scheduled_at, p.created_at,
+      p.id, p.content, p.image_url, p.image_url2, p.post_type, p.audience, p.views, p.scheduled_at, p.created_at,
       u.id AS author_id, u.username AS author_username, u.display_name AS author_display_name,
       u.avatar_url AS author_avatar_url, u.verified AS author_verified, u.bio AS author_bio,
       COALESCE(pl.like_count, 0) AS like_count,
@@ -80,6 +80,7 @@ export function buildFeedPost(r: any, previewComments: any[] = []) {
     imageUrl: r.image_url ?? "",
     imageUrl2: r.image_url2 ?? "",
     postType: r.post_type ?? "post",
+    audience: r.audience ?? "public",
     views: Number(r.views ?? 0),
     scheduledAt: r.scheduled_at ?? null,
     createdAt: r.created_at,

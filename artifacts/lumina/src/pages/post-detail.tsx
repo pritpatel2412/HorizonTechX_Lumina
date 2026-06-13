@@ -79,12 +79,12 @@ export default function PostDetailPage() {
                   value={commentContent}
                   onChange={(e) => setCommentContent(e.target.value)}
                   placeholder="Write a comment..."
-                  className="lumina-input h-10 flex-1"
+                  className="lumina-input h-12 flex-1"
                 />
                 <Button
                   type="submit"
                   disabled={!commentContent.trim() || createComment.isPending}
-                  className="btn-primary h-10 px-4"
+                  className="btn-primary h-12 px-4"
                 >
                   <Send className="w-4 h-4" />
                 </Button>

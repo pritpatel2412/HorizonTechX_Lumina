@@ -129,7 +129,7 @@ export default function AuthPage() {
       </div>
 
       {/* Right Auth Panel */}
-      <div className="w-full lg:w-[40%] flex flex-col justify-center px-8 sm:px-16 lg:px-24 bg-surface relative shadow-2xl">
+      <div className="w-full lg:w-[40%] flex flex-col justify-center px-5 sm:px-12 lg:px-20 py-10 bg-surface relative shadow-2xl overflow-y-auto">
         <div className="max-w-md w-full mx-auto">
           <div className="lg:hidden flex items-center gap-3 mb-12 justify-center">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20">

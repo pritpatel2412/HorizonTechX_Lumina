@@ -139,7 +139,7 @@ export default function NotificationsPage() {
                       {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
                     </p>
                     {notif.postPreview && (
-                      <p className="text-xs text-muted-foreground/70 mt-1 italic truncate max-w-xs">
+                      <p className="text-xs text-muted-foreground/70 mt-1 italic truncate">
                         "{notif.postPreview}"
                       </p>
                     )}

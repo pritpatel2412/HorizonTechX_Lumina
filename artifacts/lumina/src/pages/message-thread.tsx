@@ -219,14 +219,14 @@ export default function MessageThreadPage() {
               onChange={e => setContent(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(e as any); } }}
               placeholder={`Message @${username}...`}
-              className="lumina-input flex-1 h-10 px-4 text-sm"
+              className="lumina-input flex-1 h-12 px-4 text-sm"
               disabled={sendMessage.isPending}
             />
             <button
               type="submit"
               disabled={!content.trim() || sendMessage.isPending}
               className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0",
+                "w-12 h-12 rounded-full flex items-center justify-center transition-all shrink-0",
                 content.trim() ? "bg-primary hover:bg-primary/80 text-white" : "bg-white/5 text-muted-foreground cursor-not-allowed"
               )}
             >

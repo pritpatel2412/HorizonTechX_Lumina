@@ -194,7 +194,7 @@ export default function CirclePage() {
                       disabled={removeMember.isPending}
                       className={cn(
                         "p-1.5 rounded-lg transition-colors shrink-0",
-                        "text-muted-foreground opacity-0 group-hover:opacity-100",
+                        "text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100",
                         "hover:bg-destructive/10 hover:text-destructive"
                       )}
                       title="Remove from Circle"

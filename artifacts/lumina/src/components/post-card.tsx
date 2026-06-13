@@ -192,7 +192,7 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
         </div>
 
         {isMoment ? (
-          <div className="flex gap-2 mb-4 h-[300px] sm:h-[400px] rounded-xl overflow-hidden p-1 bg-gradient-to-br from-primary to-secondary">
+          <div className="flex gap-2 mb-4 h-[200px] sm:h-[300px] rounded-xl overflow-hidden p-1 bg-gradient-to-br from-primary to-secondary">
             <div className="flex-1 h-full rounded-l-lg overflow-hidden bg-black cursor-pointer">
               <img
                 src={post.imageUrl!}
@@ -240,7 +240,7 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
               </button>
 
               {showReactions && (
-                <div className="absolute bottom-full left-0 mb-2 bg-surface-elevated border border-white/10 rounded-full p-2 flex items-center gap-2 shadow-xl animate-in slide-in-from-bottom-2 z-10">
+                <div className="absolute bottom-full left-0 mb-2 bg-surface-elevated border border-white/10 rounded-full p-1.5 sm:p-2 flex items-center gap-1 sm:gap-2 shadow-xl animate-in slide-in-from-bottom-2 z-10 whitespace-nowrap">
                   {["❤️", "🔥", "😂", "😮", "😢", "👏"].map(emoji => (
                     <button
                       key={emoji}

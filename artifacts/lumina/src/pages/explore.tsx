@@ -54,7 +54,7 @@ export default function ExplorePage() {
           </div>
 
           {debouncedQuery.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-surface-elevated border border-white/10 rounded-2xl shadow-2xl overflow-hidden max-h-[300px] overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-surface-elevated border border-white/10 rounded-2xl shadow-2xl overflow-hidden max-h-[60vh] overflow-y-auto">
               {searchLoading ? (
                 <div className="p-4 space-y-3">
                   <Skeleton className="h-10 w-full" />
@@ -119,9 +119,9 @@ export default function ExplorePage() {
             <h2 className="font-display font-bold text-xl mb-4 text-white">Rising Creators</h2>
             <div className="flex gap-4 overflow-x-auto pb-4 lumina-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
               {suggestionsLoading ? (
-                Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-[150px] h-[200px] rounded-xl shrink-0" />)
+                Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-36 h-[200px] rounded-xl shrink-0" />)
               ) : suggestions?.map(user => (
-                <div key={user.id} className="lumina-card p-4 flex flex-col items-center text-center w-[150px] shrink-0 gap-3">
+                <div key={user.id} className="lumina-card p-4 flex flex-col items-center text-center w-36 shrink-0 gap-3">
                   <Link href={`/profile/${user.username}`}>
                     <img src={user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} className="w-16 h-16 rounded-full mx-auto lumina-avatar-ring mb-2 object-cover" alt="" />
                     <div className="font-medium text-sm text-foreground truncate w-full flex items-center justify-center gap-1">

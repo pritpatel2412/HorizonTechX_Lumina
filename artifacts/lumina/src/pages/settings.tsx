@@ -131,7 +131,7 @@ export default function SettingsPage() {
               <Label>Bio</Label>
               <Textarea className="lumina-input min-h-[100px]" value={profileData.bio} onChange={e => setProfileData(p => ({ ...p, bio: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Location</Label>
                 <Input className="lumina-input" value={profileData.location} onChange={e => setProfileData(p => ({ ...p, location: e.target.value }))} />

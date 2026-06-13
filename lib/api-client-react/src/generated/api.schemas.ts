@@ -331,6 +331,10 @@ export interface MessageInput {
   content: string;
 }
 
+export type DeleteAccount200 = {
+  success: boolean;
+};
+
 export type GetFeedParams = {
 offset?: number;
 limit?: number;

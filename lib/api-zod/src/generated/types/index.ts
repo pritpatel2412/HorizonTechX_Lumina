@@ -10,6 +10,7 @@ export * from './authResult';
 export * from './comment';
 export * from './commentInput';
 export * from './conversation';
+export * from './deleteAccount200';
 export * from './directMessage';
 export * from './errorResponse';
 export * from './feedPost';

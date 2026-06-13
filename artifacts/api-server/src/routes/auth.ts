@@ -1,11 +1,21 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { db, usersTable } from "@workspace/db";
-import { eq, or } from "drizzle-orm";
+import { db, usersTable, postsTable, commentsTable, likesTable, followsTable,
+         notificationsTable, savedPostsTable, messagesTable, storiesTable,
+         storyViewsTable, closeFriendsTable } from "@workspace/db";
+import { eq, or, inArray, count } from "drizzle-orm";
 import { requireAuth, signToken, safeUser } from "../lib/auth";
 import { RegisterBody, LoginBody, UpdateProfileBody, ChangePasswordBody } from "@workspace/api-zod";
 
 const router = Router();
+
+function getClientIp(req: any): string {
+  const forwarded = req.headers["x-forwarded-for"];
+  if (forwarded) {
+    return (typeof forwarded === "string" ? forwarded : forwarded[0]).split(",")[0].trim();
+  }
+  return req.socket?.remoteAddress || req.ip || "";
+}
 
 router.post("/auth/register", async (req, res): Promise<void> => {
   const parsed = RegisterBody.safeParse(req.body);
@@ -18,6 +28,20 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
     res.status(400).json({ error: "Username must be 3-20 chars, letters/numbers/underscore only" });
     return;
+  }
+
+  const clientIp = getClientIp(req);
+
+  if (clientIp) {
+    const [{ value: ipCount }] = await db
+      .select({ value: count() })
+      .from(usersTable)
+      .where(eq(usersTable.registrationIp, clientIp));
+
+    if (ipCount >= 3) {
+      res.status(429).json({ error: "Too many accounts created from this network. Maximum 3 per IP." });
+      return;
+    }
   }
 
   const existing = await db.select({ id: usersTable.id })
@@ -43,6 +67,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     website: "",
     location: "",
     verified: false,
+    registrationIp: clientIp,
   }).returning();
 
   const token = signToken(user.id);
@@ -83,6 +108,62 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
     return;
   }
   res.json(safeUser(user));
+});
+
+router.delete("/auth/me", requireAuth, async (req, res): Promise<void> => {
+  const uid = req.userId!;
+
+  const userPosts = await db.select({ id: postsTable.id }).from(postsTable).where(eq(postsTable.userId, uid));
+  const postIds = userPosts.map(p => p.id);
+
+  const userStories = await db.select({ id: storiesTable.id }).from(storiesTable).where(eq(storiesTable.userId, uid));
+  const storyIds = userStories.map(s => s.id);
+
+  const userComments = await db.select({ id: commentsTable.id }).from(commentsTable).where(eq(commentsTable.userId, uid));
+  const commentIds = userComments.map(c => c.id);
+
+  await db.delete(notificationsTable).where(
+    or(eq(notificationsTable.recipientId, uid), eq(notificationsTable.senderId, uid))
+  );
+
+  if (storyIds.length > 0) {
+    await db.delete(storyViewsTable).where(
+      or(eq(storyViewsTable.viewerId, uid), inArray(storyViewsTable.storyId, storyIds))
+    );
+  } else {
+    await db.delete(storyViewsTable).where(eq(storyViewsTable.viewerId, uid));
+  }
+
+  const likeConditions: any[] = [eq(likesTable.userId, uid)];
+  if (postIds.length > 0) likeConditions.push(inArray(likesTable.postId, postIds));
+  if (commentIds.length > 0) likeConditions.push(inArray(likesTable.commentId, commentIds));
+  await db.delete(likesTable).where(or(...likeConditions));
+
+  const savedConditions: any[] = [eq(savedPostsTable.userId, uid)];
+  if (postIds.length > 0) savedConditions.push(inArray(savedPostsTable.postId, postIds));
+  await db.delete(savedPostsTable).where(or(...savedConditions));
+
+  const commentConditions: any[] = [eq(commentsTable.userId, uid)];
+  if (postIds.length > 0) commentConditions.push(inArray(commentsTable.postId, postIds));
+  await db.delete(commentsTable).where(or(...commentConditions));
+
+  await db.delete(messagesTable).where(
+    or(eq(messagesTable.senderId, uid), eq(messagesTable.receiverId, uid))
+  );
+
+  await db.delete(followsTable).where(
+    or(eq(followsTable.followerId, uid), eq(followsTable.followingId, uid))
+  );
+
+  await db.delete(closeFriendsTable).where(
+    or(eq(closeFriendsTable.userId, uid), eq(closeFriendsTable.friendId, uid))
+  );
+
+  await db.delete(storiesTable).where(eq(storiesTable.userId, uid));
+  await db.delete(postsTable).where(eq(postsTable.userId, uid));
+  await db.delete(usersTable).where(eq(usersTable.id, uid));
+
+  res.json({ success: true });
 });
 
 router.patch("/auth/profile", requireAuth, async (req, res): Promise<void> => {

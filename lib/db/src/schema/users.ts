@@ -14,6 +14,7 @@ export const usersTable = pgTable("users", {
   website: text("website").notNull().default(""),
   location: text("location").notNull().default(""),
   verified: boolean("verified").notNull().default(false),
+  registrationIp: text("registration_ip").notNull().default(""),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

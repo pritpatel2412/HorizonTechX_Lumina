@@ -80,6 +80,14 @@ export const GetMeResponse = zod.object({
 
 
 /**
+ * @summary Delete account and all user data
+ */
+export const DeleteAccountResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * @summary Update own profile
  */
 export const UpdateProfileBody = zod.object({

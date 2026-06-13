@@ -1,18 +1,24 @@
 import { AppLayout } from "@/components/layout/app-layout";
-import { useGetMe, useUpdateProfile, useChangePassword } from "@workspace/api-client-react";
+import { useGetMe, useUpdateProfile, useChangePassword, useDeleteAccount } from "@workspace/api-client-react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, LogOut, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/compress-image";
+import { removeToken } from "@/lib/auth";
+import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function SettingsPage() {
   const { data: user } = useGetMe();
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
+  const deleteAccount = useDeleteAccount();
+  const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   const [profileData, setProfileData] = useState({
     displayName: "", bio: "", website: "", location: "", avatarUrl: "", coverUrl: ""
@@ -22,6 +28,8 @@ export default function SettingsPage() {
   });
   const [compressingAvatar, setCompressingAvatar] = useState(false);
   const [compressingCover, setCompressingCover] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const avatarRef = useRef<HTMLInputElement>(null);
   const coverRef = useRef<HTMLInputElement>(null);
 
@@ -73,6 +81,29 @@ export default function SettingsPage() {
         setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
       },
       onError: (err: any) => toast.error(err?.error || "Failed to change password. Check current password.")
+    });
+  };
+
+  const handleLogout = () => {
+    removeToken();
+    queryClient.clear();
+    navigate("/");
+    toast.success("Signed out successfully");
+  };
+
+  const handleDeleteAccount = () => {
+    if (deleteConfirmText !== user?.username) {
+      toast.error("Username doesn't match. Please try again.");
+      return;
+    }
+    deleteAccount.mutate(undefined, {
+      onSuccess: () => {
+        removeToken();
+        queryClient.clear();
+        toast.success("Your account has been permanently deleted.");
+        navigate("/");
+      },
+      onError: () => toast.error("Failed to delete account. Please try again.")
     });
   };
 
@@ -170,6 +201,93 @@ export default function SettingsPage() {
             >
               {changePassword.isPending ? "Updating…" : "Update Password"}
             </Button>
+          </div>
+        </div>
+
+        {/* Account Actions */}
+        <div className="lumina-card p-6 space-y-4">
+          <h2 className="font-display text-lg font-semibold border-b border-white/10 pb-4">Account</h2>
+
+          {/* Logout */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-white">Sign Out</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Sign out of LUMINA on this device</p>
+            </div>
+            <Button
+              variant="outline"
+              className="border-white/20 hover:bg-white/10 gap-2 shrink-0"
+              onClick={handleLogout}
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          </div>
+
+          <div className="border-t border-white/5" />
+
+          {/* Delete Account */}
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-destructive">Delete Account</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Permanently remove your account and all data. This cannot be undone.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="border-destructive/40 text-destructive hover:bg-destructive/10 gap-2 shrink-0"
+                onClick={() => { setShowDeleteConfirm(true); setDeleteConfirmText(""); }}
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </Button>
+            </div>
+
+            {showDeleteConfirm && (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-4 animate-in slide-in-from-top-2">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <p className="text-sm font-semibold">This will permanently delete everything</p>
+                </div>
+                <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>Your profile, posts, and media</li>
+                  <li>All your comments, likes, and saved posts</li>
+                  <li>Your followers and following list</li>
+                  <li>All direct messages</li>
+                </ul>
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">
+                    Type <span className="font-mono text-white font-semibold">@{user?.username}</span> to confirm
+                  </Label>
+                  <Input
+                    className="lumina-input border-destructive/40 focus:border-destructive"
+                    placeholder={`@${user?.username}`}
+                    value={deleteConfirmText}
+                    onChange={e => setDeleteConfirmText(e.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-white/20"
+                    onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(""); }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-destructive hover:bg-destructive/80 text-white gap-2"
+                    disabled={deleteConfirmText !== user?.username || deleteAccount.isPending}
+                    onClick={handleDeleteAccount}
+                  >
+                    {deleteAccount.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    {deleteAccount.isPending ? "Deleting…" : "Delete Forever"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

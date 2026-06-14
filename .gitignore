@@ -47,3 +47,28 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Local Environment Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+
+# Local Database Files
+*.db
+*.sqlite
+*.sqlite-journal
+*.sqlite3
+
+# Agent States & Memories
+.agents/
+
+# Reference Attachments
+attached_assets/
+
+# Logs
+*.log
+pnpm-debug.log*
+yarn-debug.log*

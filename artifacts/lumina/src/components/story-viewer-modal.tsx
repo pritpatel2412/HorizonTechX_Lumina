@@ -116,7 +116,14 @@ export function StoryViewerModal({ groups, initialGroupIndex, onClose }: StoryVi
 
   return (
     <div className="fixed inset-0 z-[200] bg-black flex items-center justify-center">
-      <div className="relative w-full max-w-sm h-full max-h-[100dvh] overflow-hidden" style={bgStyle}>
+      <div
+        className="relative w-full max-w-sm h-full max-h-[100dvh] overflow-hidden"
+        style={bgStyle}
+        onMouseDown={() => setPaused(true)}
+        onMouseUp={() => setPaused(false)}
+        onTouchStart={() => setPaused(true)}
+        onTouchEnd={() => setPaused(false)}
+      >
         {hasMedia && (
           <img
             src={currentStory.mediaUrl}

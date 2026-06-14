@@ -27,6 +27,40 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [spotlightImage, setSpotlightImage] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleTouchStart = () => {
+    longPressTimeoutRef.current = setTimeout(() => {
+      setShowReactions(true);
+      if (typeof window !== "undefined" && navigator.vibrate) {
+        try {
+          navigator.vibrate(50);
+        } catch (_) {}
+      }
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  };
+
+  const handleTouchMove = () => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimeoutRef.current) {
+        clearTimeout(longPressTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const isOwn = me?.id === post.author.id;
 
@@ -265,6 +299,9 @@ export function PostCard({ post, queryKeyToInvalidate }: PostCardProps) {
                 className="flex items-center gap-2 text-muted-foreground hover:text-secondary transition-colors group"
                 onClick={handleLike}
                 onContextMenu={(e) => { e.preventDefault(); setShowReactions(r => !r); }}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onTouchMove={handleTouchMove}
               >
                 <Heart
                   className={cn(
